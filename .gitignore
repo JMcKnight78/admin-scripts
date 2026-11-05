@@ -1,0 +1,24 @@
+# Generated output (never commit workplace reports)
+reports/
+exports/
+output/
+*.log
+*.tmp
+*.bak
+*.trx
+TestResults/
+# Local tools and editors
+.vscode/
+.idea/
+# Local environment and credentials
+.env
+.env.*
+!.env.example
+*.pfx
+*.p12
+*.key
+*.pem
+*.kdbx
+# OS artifacts
+Thumbs.db
+.DS_Store
