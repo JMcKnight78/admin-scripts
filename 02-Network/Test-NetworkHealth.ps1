@@ -76,12 +76,23 @@ try {
     }
     else {
         foreach ($config in $configurations) {
-            $addresses = @($config.IPv4Address | ForEach-Object { $_.IPAddress })
-            $gateways = @($config.IPv4DefaultGateway | ForEach-Object { $_.NextHop })
-            $servers = @($config.DNSServer.ServerAddresses | Where-Object { $_ })
-            $detail = 'IPv4: {0}; Gateway: {1}; DNS: {2}' -f (
-                ($addresses -join ', '), ($gateways -join ', '), ($servers -join ', ')
-            )
+            # Some active interfaces have no IPv4 address, gateway or DNS server.
+            # Filter null CIM values before accessing their properties.
+            $addresses = @($config.IPv4Address |
+                Where-Object { $null -ne $_ } |
+                ForEach-Object { $_.IPAddress })
+            $gateways = @($config.IPv4DefaultGateway |
+                Where-Object { $null -ne $_ } |
+                ForEach-Object { $_.NextHop })
+            $servers = @()
+            if ($null -ne $config.DNSServer) {
+                $servers = @($config.DNSServer.ServerAddresses |
+                    Where-Object { -not [string]::IsNullOrWhiteSpace($_) })
+            }
+            $addressText = if ($addresses.Count) { $addresses -join ', ' } else { '(none)' }
+            $gatewayText = if ($gateways.Count) { $gateways -join ', ' } else { '(none)' }
+            $dnsText = if ($servers.Count) { $servers -join ', ' } else { '(none)' }
+            $detail = 'IPv4: {0}; Gateway: {1}; DNS: {2}' -f $addressText, $gatewayText, $dnsText
             New-DiagnosticResult -Check 'Adapter' -Target $config.InterfaceAlias -Status 'Info' -Detail $detail
         }
     }
